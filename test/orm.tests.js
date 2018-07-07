@@ -7,6 +7,7 @@ const fs = require('fs-extra');
 const uuid = require('uuid');
 const db = require(`./db`);
 const ananas = require('../ananas')(db.knex);
+const _ = require('lodash');
 
 describe('ORM', function() {
   this.timeout(5000);
@@ -313,102 +314,5 @@ describe('ORM', function() {
     });
 
   });
-
-
-  describe(`Models`, function () {
-
-    it('Load a model with a custom table name', async function () {
-
-      const data = require('./fixtures/simple.fixture');
-      await db.loadData(data);
-
-      ananas.models.magazine = {
-        tableName : `book`,
-      };
-
-      const books = await ananas.magazine.find({
-        title : [`t2`],
-      });
-
-      should.exist(books);
-      books.should.be.an(`array`);
-      books.length.should.equal(1);
-      const book = books.pop();
-      should.exist(book);
-      book.title.should.equal(`t2`);
-
-    });
-
-    it('Load a model with a simple 1:1 relationship', async function () {
-
-      const data = require('./fixtures/simple.fixture');
-      await db.loadData(data);
-
-      ananas.models.magazine = {
-        tableName : `book`,
-        associations : {
-          author : {
-            model : `author`
-          }
-        },
-
-      };
-
-      const books = await ananas.magazine.find({
-        title : `t2`,
-        populate : [`author`],
-      });
-
-      should.exist(books);
-      books.should.be.an(`array`);
-      books.length.should.equal(1);
-      const book = books.pop();
-      should.exist(book);
-      book.title.should.equal(`t2`);
-      book.author.should.be.an(`object`);
-      book.author.name.should.equal(`n2`);
-
-    });
-
-
-    it('Load a model with a custom 1:1 relationship', async function () {
-
-      const data = require('./fixtures/simple.fixture');
-      await db.loadData(data);
-
-      ananas.models.magazine = {
-        tableName : `book`,
-        associations : {
-          author : {
-            model : `writer`
-          }
-        },
-      };
-
-      ananas.models.writer = {
-        tableName : `author`,
-      };
-
-      const books = await ananas.magazine.find({
-        title : `t2`,
-        populate : [`author`],
-      });
-
-      should.exist(books);
-      books.should.be.an(`array`);
-      books.length.should.equal(1);
-      const book = books.pop();
-      should.exist(book);
-      book.title.should.equal(`t2`);
-      book.author.should.be.an(`object`);
-      book.author.name.should.equal(`n2`);
-
-    });
-
-
-  })
-
-
-
 
 });

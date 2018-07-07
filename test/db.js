@@ -19,6 +19,10 @@ module.exports = {
     // return fs.remove(path.join(__dirname, `../testdb.sqlite`));
     await knex.raw(`DELETE FROM book;`);
     await knex.raw(`DELETE FROM author;`);
+    await knex.raw(`DELETE FROM car;`);
+    await knex.raw(`DELETE FROM drivers;`);
+    await knex.raw(`DELETE FROM movie;`);
+    await knex.raw(`DELETE FROM character;`);
   },
   async loadData (data) {
     await this.empty();

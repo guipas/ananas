@@ -55,10 +55,8 @@ const methods = (tableName, model, models) => ({
     return result[0];
   },
   async find (options = {}) {
-
     let populate = null;
     if (options.populate) {
-      console.log(`populate!`);
       populate = options.populate;
       Reflect.deleteProperty(options, `populate`);
     }
@@ -76,15 +74,24 @@ const methods = (tableName, model, models) => ({
           console.log(`relation definition :`, relationDef);
           const targetModel = models[relationDef.model] || {};
           const targetTable = targetModel.tableName || relationDef.model;
-          const targetColumn = relationDef.targetAttribute || targetTable;
-          const ids = _.map(results, relation
-          )
+          console.log(`target table : `, targetTable);
+          const targetColumn = relationDef.targetAttribute || `id`;
+          const sourceColumn = relationDef.sourceAttribute || relation;
+          const ids = _.map(results, sourceColumn)
           console.log(`ids : `, ids)
-          const members =  await knex.select().whereIn(`id`, ids).from(targetTable).on('query', function(data) {
+          const members =  await knex.select().whereIn(targetColumn, ids).from(targetTable).on('query', function(data) {
             console.log(`-->`, data.sql);
           });
           results.forEach(result => {
-            result[relation] = _.find(members, { id : result[targetColumn]});
+            if (relationDef.targetType && relationDef.targetType === `collection`) {
+              const foreignObjects = _.filter(members, { [targetColumn] : result[sourceColumn]})
+              console.log(`Foreign objects : `, foreignObjects);
+              result[relation] = foreignObjects;
+            } else {
+              const foreignObject = _.find(members, { [targetColumn] : result[sourceColumn]})
+              console.log(`Foreign object : `, foreignObject);
+              result[relation] = foreignObject;
+            }
           });
         } else {
           console.error(`no relation defined on model`);
@@ -118,7 +125,7 @@ module.exports = knexObj => {
       }
 
       const model = obj.models[prop];
-      const tableName = model ? model.tableName : prop;
+      const tableName = model && model.tableName ? model.tableName : prop;
       return methods(tableName, model, obj.models);
     },
     set (obj, prop, value) {
