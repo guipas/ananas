@@ -18,6 +18,7 @@ module.exports = {
     // return knex.raw(query);
     // return fs.remove(path.join(__dirname, `../testdb.sqlite`));
     await knex.raw(`DELETE FROM book;`);
+    await knex.raw(`DELETE FROM author;`);
   },
   async loadData (data) {
     await this.empty();

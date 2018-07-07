@@ -1,35 +1,100 @@
 
 let knex = null;
+const _ = require('lodash');
 
-const methods = tableName => ({
+
+const buildWheres = (qb, whereArgs, parentAttribute) => {
+
+  Object.keys(whereArgs).forEach(attribute => {
+    const value = whereArgs[attribute];
+    switch (attribute) {
+
+      case `or`:
+        value.forEach(v => {
+          qb = qb.orWhere(subQb => buildWheres(subQb, v));
+        });
+        break;
+
+      case `!`:
+        if (Array.isArray(value)) {
+          qb = qb.whereNotIn(parentAttribute, value);
+        } else {
+          qb = qb.whereNot(parentAttribute, value);
+        }
+        break;
+
+      case `<`   :
+      case `>`   :
+      case `<=`  :
+      case `>=`  :
+      case `=`   :
+      case `like`:
+        qb = qb.andWhere(parentAttribute, attribute, value);
+        break;
+
+      default:
+        if (Array.isArray(value)) {
+          qb = qb.whereIn(attribute, value);
+        } else if (typeof value === `object`) {
+          qb = qb.andWhere(subQb => buildWheres(subQb, value, attribute));
+        } else {
+          qb = qb.andWhere(attribute, `=`, value);
+        }
+    }
+  })
+};
+
+const populate = qb => {
+
+};
+
+const methods = (tableName, model, models) => ({
   async findOne (...args) {
-    const result = await this.find(...args).limit(1);
+    const result = await this.find(...args);
 
     return result[0];
   },
-  find (options = {}) {
+  async find (options = {}) {
+
+    let populate = null;
+    if (options.populate) {
+      console.log(`populate!`);
+      populate = options.populate;
+      Reflect.deleteProperty(options, `populate`);
+    }
     const where = options;
-    const wheres = [];
-    Object.keys(where).forEach(attribute => {
-      const value = where[attribute];
-      if (typeof value === `object`) {
-        if (value[`!`]) {
-          const method = Array.isArray(value[`!`]) ? `whereNotIn` : `andWhereNot`;
-          wheres.push([method, attribute, value[`!`]]);
-          Reflect.deleteProperty(where, attribute);
-        } else if (value[`>`]) {
-          wheres.push([`andWhere`, attribute, `>`, value[`>`]])
-          Reflect.deleteProperty(where, attribute);
-        }
-      }
+    const results = await knex.select().where(qb => buildWheres(qb, where)).from(tableName).on('query', function(data) {
+      // console.log(data);
     });
 
-    console.log(`where : `, where);
-    let query = knex.select().where(where)
-    wheres.forEach(w => { query = query[w.shift()](...w)});
-    return query.from(tableName).on('query', function(data) {
-      console.log(data);
-    });
+    if (populate) {
+      console.log(`populate`)
+      const populateResults = await Promise.all(populate.map(async relation => {
+        console.log(`relation : `, relation);
+        if (model && model.associations && model.associations[relation]) {
+          const relationDef = model.associations[relation];
+          console.log(`relation definition :`, relationDef);
+          const targetModel = models[relationDef.model] || {};
+          const targetTable = targetModel.tableName || relationDef.model;
+          const targetColumn = relationDef.targetAttribute || targetTable;
+          const ids = _.map(results, relation
+          )
+          console.log(`ids : `, ids)
+          const members =  await knex.select().whereIn(`id`, ids).from(targetTable).on('query', function(data) {
+            console.log(`-->`, data.sql);
+          });
+          results.forEach(result => {
+            result[relation] = _.find(members, { id : result[targetColumn]});
+          });
+        } else {
+          console.error(`no relation defined on model`);
+        }
+      }));
+
+      // console.log(populateResults);
+    }
+
+    return results;
   },
   update () {
 
@@ -47,8 +112,14 @@ module.exports = knexObj => {
   return new Proxy({
     models : {},
   }, {
-    get (obj, prop) {
-      return methods(prop);
+    get (obj, prop, ...args) {
+      if (obj[prop]) {
+        return Reflect.get(obj, prop, ...args);
+      }
+
+      const model = obj.models[prop];
+      const tableName = model ? model.tableName : prop;
+      return methods(tableName, model, obj.models);
     },
     set (obj, prop, value) {
       obj.models[prop] = value;
