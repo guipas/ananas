@@ -1,4 +1,5 @@
 const id = require('uuid').v4;
+const moment = require('moment');
 
 const author = [
   [ `id`  ,   `name` ,       `bio`      ],
@@ -41,12 +42,38 @@ const movie = [
   [ id()  ,   `mo1`    ,                        ],
 ];
 
-const character = [
-  [ `id`  ,   `name` ,          `movie`         ],
-  [ id()  ,   `cha1`    ,       movie[1][0]      ],
-  [ id()  ,   `cha2`    ,       movie[1][0]      ],
+
+const actor = [
+  [ `id`                                    ,   `name`    ,     ],
+  [ `f10e0a4a-8d5a-4b54-871f-0f919fa2178b`  ,   `act1`    ,     ],
+  [ `ea37f579-1436-4421-984c-7c139206c31b`  ,   `act2`    ,     ],
 ];
 
+const character = [
+  [ `id`  ,   `name` ,          `movie`        , `actor_id`        ],
+  [ id()  ,   `cha1`    ,       movie[1][0]    ,   actor[1][0]  ],
+  [ id()  ,   `cha2`    ,       movie[1][0]    ,   actor[2][0]  ],
+];
+
+const fans = [
+  [ `id`  ,   `name` ,          `id_actor`     ,  ],
+  [ id()  ,   `fan1`    ,       actor[1][0]    ,  ],
+  [ id()  ,   `fan2`    ,       actor[1][0]    ,  ],
+  [ id()  ,   `fan3`    ,       actor[2][0]    ,  ],
+  [ id()  ,   `fan4`    ,       actor[2][0]    ,  ],
+];
+
+const backstory = [
+  [ `id`  ,   `content` ,          `character`          ,  ],
+  [ id()  ,   `backstory1`    ,      character[1][0]    ,  ],
+  [ id()  ,   `backstory2`    ,      character[2][0]    ,  ],
+];
+
+const ship = [
+  [ `id`  ,   `name`     ,      `options`                ,    `capacity`  , `size`  , `builtAt`                                  ,    `createdAt`                            , `departure`                              , `active`  ],
+  [ id()  ,   `ship1`    ,      `{ "test" : "test" }`    ,         3      ,  2.5    , moment(`201701`, `YYYYMM`).toISOString()   , moment(`201701`, `YYYYMM`).toISOString()  , moment(`201701`, `YYYYMM`).toISOString() , true      ],
+  [ id()  ,   `ship2`    ,      { test : 'test'    }     ,         3      ,  2.5    , moment(`201701`, `YYYYMM`).toISOString()   , moment(`201701`, `YYYYMM`).toISOString()  , moment(`201701`, `YYYYMM`).toISOString() , true      ],
+];
 
 module.exports = {
   book,
@@ -54,5 +81,9 @@ module.exports = {
   car,
   drivers,
   movie,
+  actor,
   character,
+  fans,
+  backstory,
+  ship,
 };

@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "migrate" : "./node_modules/.bin/knex migrate:latest --env tests",
+    "migrate": "./node_modules/.bin/knex migrate:latest --env tests",
     "dev": "npm run migrate && ./node_modules/mocha/bin/mocha --watch",
-    "test": "npm run migrate && ./node_modules/mocha/bin/mocha --exit"
+    "test": "./scripts/tests.sh"
   },
   "keywords": [],
   "author": "",
@@ -18,6 +18,7 @@
     "knex": "^0.14.6",
     "lodash": "^4.17.10",
     "mocha": "^5.2.0",
+    "moment": "^2.22.2",
     "pg": "^7.4.3",
     "sqlite3": "^4.0.1",
     "uuid": "^3.3.2"

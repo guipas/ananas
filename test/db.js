@@ -1,12 +1,11 @@
 const _ = require('lodash');
 const fs = require('fs-extra');
-const path = require('path')
-var knex = require('knex')({
-  client: 'sqlite3',
-  connection: {
-    filename: path.join(__dirname, `../testdb.sqlite3`),
-  },
-});
+const path = require('path');
+const database = process.env.ANANAS_TEST_DB || `tests`;
+console.log(`Using database : `, database);
+// docker run --name ananas-tests -e POSTGRES_USER='ananas' -e POSTGRES_PASSWORD='ananas' -e POSTGRES_DB='ananas' -p 5434:5432 --rm postgres
+// const knex = require('knex')(require(`../knexfile`).testsPostgres);
+const knex = require('knex')(require(`../knexfile`)[database]);
 
 module.exports = {
   async empty () {
@@ -23,6 +22,10 @@ module.exports = {
     await knex.raw(`DELETE FROM drivers;`);
     await knex.raw(`DELETE FROM movie;`);
     await knex.raw(`DELETE FROM character;`);
+    await knex.raw(`DELETE FROM actor;`);
+    await knex.raw(`DELETE FROM fans;`);
+    await knex.raw(`DELETE FROM backstory;`);
+    await knex.raw(`DELETE FROM ship;`);
   },
   async loadData (data) {
     await this.empty();

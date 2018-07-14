@@ -9,4 +9,15 @@ module.exports = {
     },
   },
 
+  testsPostgres: {
+    client: 'pg',
+    connection: {
+      host : '127.0.0.1',
+      user : 'ananas',
+      password : 'ananas',
+      database : 'ananas',
+      port : 5434,
+    }
+  },
+
 };
