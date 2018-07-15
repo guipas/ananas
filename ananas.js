@@ -3,8 +3,10 @@ let knex = null;
 const _ = require('lodash');
 
 const log = (...args) => { if (false) { console.log(...args); }}
+const warn = (...args) => { if (false) { console.log(...args); }}
 const logQueries = false;
 const queryLogger = data => logQueries && console.log(data.sql);
+
 
 const buildWheres = (qb, whereArgs, parentAttribute) => {
 
@@ -75,7 +77,7 @@ const populateResults = async (results, model, models, relationsList) => {
         const method = relationDef.targetType && relationDef.targetType === `collection` ? `filter` : `find`;
         const foreignObjects = _[method](populationResults, { [relationDef.targetAttribute] : result[relationDef.sourceAttribute]})
         log(`Foreign objects : `, foreignObjects);
-        result[relation] = foreignObjects;
+        result[relation] = foreignObjects || null;
 
         if (Array.isArray(result[populatedSymbol])) {
           result[populatedSymbol].push(relation);
@@ -183,20 +185,33 @@ const proxifyResults = (results, model) => {
   });
 };
 
-const initModel = modelName => ({
-  tableName : modelName,
-  primaryKey : `id`,
-  strict : false,
-});
+const Model = function (name, options = {}) {
+  log(`building model `, name);
+  this.name = name;
+  this.tableName = options.tableName || name;
+  this.primaryKey = options.primaryKey || `id`;
+  this.strict = options.strict && true;
+  this.attributes = options.attributes || {};
+  this.associations = {};
 
-const methods = (modelName, models) => {
-  const model = { ...initModel(modelName), ...models[modelName] };
-  Object.keys(models).forEach(m => {
-    models[m] = {
-      ...initModel(m),
-      ...models[m],
-    };
-  });
+  if (!this.attributes[this.primaryKey]) {
+    this.attributes[this.primaryKey] = String;
+  }
+
+  if (options.associations) {
+    Object.keys(options.associations).forEach(associationName => {
+      const associationOptions = options.associations[associationName];
+
+      if (!this.attributes[associationOptions.sourceAttribute]) {
+        throw new Error(`Source attribute for an association should defined in model's attributes`);
+      }
+
+      this.associations[associationName] = associationOptions;
+    });
+  }
+};
+
+const methods = (model, models) => {
 
   return {
     async findOne (...args) {
@@ -227,9 +242,15 @@ const methods = (modelName, models) => {
 
     async update (options, entity = null, targetModel = model) {
       console.log(`---> enter update`, targetModel.tableName);
+      // console.log(`target model = `, targetModel);
+      // console.log(`table name = `, targetModel.tableName);
       let where = options;
 
       if (entity === null) {
+        if (options === null) {
+          // nothing to update
+          return;
+        }
         // we only passed an object to the function, so its that object that
         // we have to update based on its primary key
         entity = options;
@@ -237,11 +258,15 @@ const methods = (modelName, models) => {
         options = {};
       }
 
+      if (Array.isArray(entity)) {
+        return Promise.all(entity.map(e => this.update(options, e, targetModel)));
+      }
+
       if (entity[populatedSymbol] && entity[populatedSymbol].length > 0) {
 
         // updating populated attributes
         await Promise.all(entity[populatedSymbol].map(relationName => {
-          console.log(`updating `, relationName);
+          // console.log(`updating `, relationName);
           const relation = targetModel.associations[relationName];
           const relatedModel = models[relation.targetModel];
           // console.log(`related model : `, relatedModel);
@@ -272,30 +297,40 @@ const methods = (modelName, models) => {
         const populatedAttributes = {};
         const pureAssociations = [];
         entity[populatedSymbol].forEach(relationName => {
-          console.log(`##`, targetModel.tableName, `has populated : `, relationName);
+          // console.log(`##`, targetModel.tableName, `has populated : `, relationName);
           if (targetModel.attributes && targetModel.attributes[relationName]) {
             const relation = targetModel.associations[relationName];
-            populatedAttributes[relationName] = entity[relationName][relation.targetAttribute];
+            populatedAttributes[relationName] = entity[relationName] ? entity[relationName][relation.targetAttribute] : null;
           } else {
             pureAssociations.push(relationName);
           }
         });
-        console.log(`populated attr : `, populatedAttributes);
+        // console.log(`populated attr : `, populatedAttributes);
         entity = { ...entity, ...populatedAttributes};
         pureAssociations.forEach(pa => Reflect.deleteProperty(entity, pa));
       }
 
-      console.log(`@@ end populating `, targetModel.tableName);
-      console.log(`@@ `, targetModel.attributes);
+      // console.log(`@@ end populating `, targetModel.tableName);
+      // console.log(`@@ `, targetModel.attributes);
+      // console.log(entity);
 
       if (targetModel.attributes) {
+        const omitted = _.omit(entity, Object.keys(targetModel.attributes));
+        if (Object.keys(omitted).length > 0) {
+          warn(`Unknown attributes for model ${targetModel.name} : ${Object.keys(omitted).join(`, `)}. All attributes must be explicitly defined in models if you want them to update in your database`);
+        }
         entity = _.pick(entity, Object.keys(targetModel.attributes));
+        entity = _.omit(entity, [targetModel.primaryKey]);
         entity = formatAttributes(entity, targetModel);
       }
 
-      const res = await knex(targetModel.tableName).where(qb => buildWheres(qb, where)).update(entity).on('query', queryLogger);
-      console.log(`<---- leaving upate`, targetModel.tableName);
-      return res;
+      if (Object.keys(entity).length > 0) {
+        // console.log(`upading with : `, entity);
+        return knex(targetModel.tableName).where(qb => buildWheres(qb, where)).update(entity).on('query', queryLogger);
+      }
+
+      warn(`No attributes to update for model ${targetModel.name}. All attributes must be explicitly defined in models if you want them to update in your database`);
+      return 0;
     },
     destroy (attributes) {
       if (Array.isArray(attributes)) {
@@ -318,14 +353,19 @@ let ananas = null;
 module.exports = knexObj => {
   knex = knexObj;
   ananas = new Proxy({
-    models : {},
+    models : new Proxy({}, {
+      set (obj, prop, val) {
+        return Reflect.set(obj, prop, new Model(prop, val));
+      },
+    }),
   }, {
     get (obj, prop, ...args) {
       if (obj[prop]) {
         return Reflect.get(obj, prop, ...args);
       }
 
-      return methods(prop, obj.models);
+      const model = obj.models[prop] || new Model(prop);
+      return methods(model, obj.models);
     },
     set (obj, prop, value, ...args) {
       obj.models[prop] = value;

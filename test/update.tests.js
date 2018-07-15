@@ -6,7 +6,7 @@ const db = require(`./db`);
 const ananas = require('../ananas')(db.knex);
 const _ = require('lodash');
 
-describe(`Update`, function () {
+describe(`Update queries`, function () {
 
   this.timeout(5000);
 
@@ -14,6 +14,12 @@ describe(`Update`, function () {
 
     const data = require('./fixtures/simple.fixture');
     await db.loadData(data);
+
+    ananas.models.book = {
+      attributes : {
+        title : String,
+      },
+    };
 
     const results = await ananas.book.update({
       title : [`t2`],
@@ -34,10 +40,43 @@ describe(`Update`, function () {
 
   });
 
+  it('Does not update an attribute that is not defined', async function () {
+
+    const data = require('./fixtures/simple.fixture');
+    await db.loadData(data);
+
+    ananas.models.book = {
+    };
+
+    const results = await ananas.book.update({
+      title : [`t2`],
+    }, {
+      title : `XXX`,
+    });
+
+    const books = await ananas.book.find({ title : `t2` });
+
+    results.should.equal(0);
+
+    should.exist(books);
+    books.should.be.an(`array`);
+    books.length.should.equal(1);
+    const book = books.pop();
+    should.exist(book);
+    book.title.should.equal(`t2`);
+
+  });
+
   it('Update with a simple query', async function () {
 
     const data = require('./fixtures/simple.fixture');
     await db.loadData(data);
+
+    ananas.models.book = {
+      attributes : {
+        title : String,
+      },
+    };
 
     const results = await ananas.book.update({
       title : [`t2`, `t3`],
@@ -63,6 +102,15 @@ describe(`Update`, function () {
     const data = require('./fixtures/simple.fixture');
     await db.loadData(data);
 
+    ananas.models.book = {
+      attributes : {
+        title : String,
+        description : String,
+        stars : Number,
+        author : String,
+      },
+    };
+
     const oldBook = await ananas.book.findOne({ title : `t2` });
 
     oldBook.description.should.equal(`d2`);
@@ -81,6 +129,15 @@ describe(`Update`, function () {
 
     const data = require('./fixtures/simple.fixture');
     await db.loadData(data);
+
+    ananas.models.book = {
+      attributes : {
+        title : String,
+        description : String,
+        stars : Number,
+        author : String,
+      },
+    };
 
     const results = await ananas.book.update({
       title : [`t2`, `t3`],
@@ -101,7 +158,7 @@ describe(`Update`, function () {
 
   });
 
-  it('Update model event if we added properties to the object', async function () {
+  it('Update model even if we added random properties to the object', async function () {
 
     const data = require('./fixtures/simple.fixture');
     await db.loadData(data);
@@ -217,6 +274,10 @@ describe(`Update`, function () {
     await db.loadData(data);
 
     ananas.models.movie = {
+      attributes : {
+        id : String,
+        title : String,
+      },
       associations : {
         character : {
           targetModel : `character`,
@@ -228,6 +289,12 @@ describe(`Update`, function () {
     };
 
     ananas.models.character = {
+      attributes : {
+        id : String,
+        name : String,
+        movie : String,
+        actor_id : String,
+      }
     };
 
     const movies = await ananas.movie.find({
@@ -275,12 +342,16 @@ describe(`Update`, function () {
 
   });
 
-  it.only('Update nested populated instances correctly', async function () {
+  it('Update nested populated instances correctly', async function () {
 
     const data = require('./fixtures/simple.fixture');
     await db.loadData(data);
 
     ananas.models.movie = {
+      attributes : {
+        id : String,
+        title : String,
+      },
       associations : {
         characters : {
           targetModel : `character`,
@@ -293,6 +364,9 @@ describe(`Update`, function () {
 
     ananas.models.actors = {
       tableName : `actor`,
+      attributes : {
+        id : String,
+      },
       associations : {
         fans : {
           targetModel : `fan`,
@@ -304,6 +378,11 @@ describe(`Update`, function () {
     };
 
     ananas.models.character = {
+      attributes : {
+        id : String,
+        actor_id : String,
+        movie : String,
+      },
       associations : {
         comedian : {
           targetModel : `actors`,
@@ -320,6 +399,9 @@ describe(`Update`, function () {
 
     ananas.models.fan = {
       tableName : `fans`,
+      attributes : {
+        id_actor : String,
+      }
     };
 
     const movies = await ananas.movie.find({

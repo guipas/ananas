@@ -35,155 +35,6 @@ describe(`Models`, function () {
 
   });
 
-  it('Load a model with a simple 1:1 relationship', async function () {
-
-    const data = require('./fixtures/simple.fixture');
-    await db.loadData(data);
-
-    ananas.models.magazine = {
-      tableName : `book`,
-      associations : {
-        author : {
-          targetModel : `author`,
-          sourceAttribute : `author`,
-          targetAttribute : `id`,
-        }
-      },
-
-    };
-
-    const books = await ananas.magazine.find({
-      title : `t2`,
-      populate : [`author`],
-    });
-
-    should.exist(books);
-    books.should.be.an(`array`);
-    books.length.should.equal(1);
-    const book = books.pop();
-    should.exist(book);
-    book.title.should.equal(`t2`);
-    book.author.should.be.an(`object`);
-    book.author.name.should.equal(`n2`);
-
-  });
-
-
-  it('Load a model with a custom 1:1 relationship', async function () {
-
-    const data = require('./fixtures/simple.fixture');
-    await db.loadData(data);
-
-    ananas.models.magazine = {
-      tableName : `book`,
-      associations : {
-        author : {
-          targetModel : `writer`,
-          sourceAttribute : `author`,
-          targetAttribute : `id`,
-        }
-      },
-    };
-
-    ananas.models.writer = {
-      tableName : `author`,
-    };
-
-    const books = await ananas.magazine.find({
-      title : `t2`,
-      populate : [`author`],
-    });
-
-    should.exist(books);
-    books.should.be.an(`array`);
-    books.length.should.equal(1);
-    const book = books.pop();
-    should.exist(book);
-    book.title.should.equal(`t2`);
-    book.author.should.be.an(`object`);
-    book.author.name.should.equal(`n2`);
-
-  });
-
-  it('Load a model with a custom 1:1 relationship with different source and dest attributes', async function () {
-
-    const data = require('./fixtures/simple.fixture');
-    await db.loadData(data);
-
-    ananas.models.driver = {
-      tableName : `drivers`,
-      associations : {
-        car : {
-          targetModel : `car`,
-          sourceAttribute : `vehicule`,
-          targetAttribute : `model`,
-        }
-      },
-    };
-
-    const drivers = await ananas.driver.find({
-      name : `n1`,
-      populate : [`car`],
-    });
-
-    should.exist(drivers);
-    drivers.should.be.an(`array`);
-    drivers.length.should.equal(1);
-    const driver = drivers.pop();
-    should.exist(driver);
-    driver.name.should.equal(`n1`);
-    driver.car.should.be.an(`object`);
-    driver.car.model.should.equal(`m1`);
-    driver.car.description.should.equal(`cd1`);
-
-  });
-
-  it('Load a model with a custom 1:1 relationship with different source and dest attributes', async function () {
-
-    const data = require('./fixtures/simple.fixture');
-    await db.loadData(data);
-
-    ananas.models.driver = {
-      tableName : `drivers`,
-      associations : {
-        car : {
-          targetModel : `car`,
-          sourceAttribute : `vehicule`,
-          targetAttribute : `model`,
-        }
-      },
-    };
-
-    ananas.models.car = {
-      associations : {
-        theDriver : {
-          targetModel : `driver`,
-          sourceAttribute : `model`,
-          targetAttribute : `vehicule`,
-        }
-      }
-    };
-
-    const cars = await ananas.car.find({
-      model : [`m1`, `m2`],
-      populate : [`theDriver`],
-    });
-
-    should.exist(cars);
-    cars.should.be.an(`array`);
-    cars.length.should.equal(2);
-    const car1 = _.find(cars, { model : `m1` });
-    const car2 = _.find(cars, { model : `m2` });
-    should.exist(car1);
-    should.exist(car2);
-    car1.model.should.equal(`m1`);
-    car1.theDriver.should.be.an(`object`);
-    car1.theDriver.name.should.equal(`n1`);
-    car1.theDriver.vehicule.should.equal(`m1`);
-
-  });
-
-
   it('Load a model with a simple 1:n relationship', async function () {
 
     const data = require('./fixtures/simple.fixture');
@@ -236,6 +87,9 @@ describe(`Models`, function () {
     await db.loadData(data);
 
     ananas.models.character = {
+      attributes : {
+        movie : String,
+      },
       associations : {
         movie : {
           targetModel : `movie`,
@@ -329,6 +183,9 @@ describe(`Models`, function () {
     };
 
     ananas.models.character = {
+      attributes : {
+        actor_id : String,
+      },
       associations : {
         comedian : {
           targetModel : `actors`,
@@ -399,6 +256,9 @@ describe(`Models`, function () {
     };
 
     ananas.models.character = {
+      attributes : {
+        actor_id : String,
+      },
       associations : {
         comedian : {
           targetModel : `actors`,
