@@ -6,7 +6,7 @@ const should = require('chai').should();
 const fs = require('fs-extra');
 const uuid = require('uuid');
 const db = require(`./db`);
-const ananas = require('../ananas')(db.knex);
+const ananas = require('../index')(db.knex);
 const _ = require('lodash');
 
 describe(`Models`, function () {

@@ -3,7 +3,7 @@
 require(`./setup.js`);
 const should = require('chai').should();
 const db = require(`./db`);
-const ananas = require('../ananas')(db.knex);
+const ananas = require('../index')(db.knex);
 const _ = require('lodash');
 
 describe(`Update queries`, function () {

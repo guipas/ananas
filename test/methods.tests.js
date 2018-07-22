@@ -1,15 +1,11 @@
 "use strict";
 
 require(`./setup.js`);
-// const assert = require('chai').assert;
 const should = require('chai').should();
-const fs = require('fs-extra');
-const uuid = require('uuid');
 const db = require(`./db`);
-const ananas = require('../ananas')(db.knex);
-const _ = require('lodash');
+const ananas = require('../index')(db.knex);
 
-describe.only(`Methods`, function () {
+describe(`Methods`, function () {
 
   this.timeout(5000);
 
@@ -41,8 +37,6 @@ describe.only(`Methods`, function () {
     });
 
     should.exist(book);
-
-    console.log(book.addOneStar)
 
     // book.should.have.property(`addOneStar`);
     book.addOneStar.should.be.a(`function`);
@@ -122,9 +116,6 @@ describe.only(`Methods`, function () {
 
     should.exist(book);
 
-    console.log(book.addOneStar)
-
-    // book.should.have.property(`addOneStar`);
     book.uppercasedTitle.should.be.a(`string`);
     book.uppercasedTitle.should.equal(`T1`);
 

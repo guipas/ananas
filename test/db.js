@@ -9,13 +9,6 @@ const knex = require('knex')(require(`../knexfile`)[database]);
 
 module.exports = {
   async empty () {
-    // const tableNames = await knex
-    // .raw(`SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE';`)
-    // .then(res => res.rows.map(r => r.table_name).filter(t => t.indexOf(`migrations`) === -1));
-
-    // const query = `TRUNCATE ${tableNames.map(t => `"${t}"`).join(`,`)}`;
-    // return knex.raw(query);
-    // return fs.remove(path.join(__dirname, `../testdb.sqlite`));
     await knex.raw(`DELETE FROM book;`);
     await knex.raw(`DELETE FROM author;`);
     await knex.raw(`DELETE FROM car;`);

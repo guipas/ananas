@@ -3,7 +3,7 @@
 
 *With Ananas ORM models look like this :*
 
-```
+```js
 module.exports = {
 
   name : 'user',
@@ -45,7 +45,7 @@ module.exports = {
 npm install ananas
 ```
 
-```
+```js
 const knex = require('knex')({
   // your knex config
 });
