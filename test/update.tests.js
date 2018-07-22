@@ -163,7 +163,7 @@ describe(`Update queries`, function () {
     const data = require('./fixtures/simple.fixture');
     await db.loadData(data);
 
-    ananas.book = {
+    ananas.models.book = {
       attributes : {
         id : String,
         title : String,
@@ -268,7 +268,81 @@ describe(`Update queries`, function () {
 
   });
 
-  it('Update populated instance correctly', async function () {
+  // it('Update populated instance correctly', async function () {
+
+  //   const data = require('./fixtures/simple.fixture');
+  //   await db.loadData(data);
+
+  //   ananas.models.movie = {
+  //     attributes : {
+  //       id : String,
+  //       title : String,
+  //     },
+  //     associations : {
+  //       character : {
+  //         targetModel : `character`,
+  //         targetType : `collection`,
+  //         sourceAttribute : `id`,
+  //         targetAttribute : `movie`,
+  //       }
+  //     },
+  //   };
+
+  //   ananas.models.character = {
+  //     attributes : {
+  //       id : String,
+  //       name : String,
+  //       movie : String,
+  //       actor_id : String,
+  //     }
+  //   };
+
+  //   const movies = await ananas.movie.find({
+  //     title : `mo1`,
+  //     populate : [`character`],
+  //   });
+
+  //   should.exist(movies);
+  //   movies.should.be.an(`array`);
+  //   movies.length.should.equal(1);
+  //   const movie = movies.pop();
+  //   should.exist(movie);
+  //   movie.title.should.equal(`mo1`);
+  //   movie.character.should.be.an(`array`);
+
+  //   const cha1 = _.find(movie.character, { name : `cha1`});
+  //   const cha2 = _.find(movie.character, { name : `cha2`});
+
+  //   should.exist(cha1);
+  //   should.exist(cha2);
+
+  //   cha1.name.should.equal(`cha1`);
+  //   cha1.movie.should.equal(movie.id);
+
+  //   cha2.name.should.equal(`cha2`);
+  //   cha2.movie.should.equal(movie.id);
+
+  //   cha2.name = `cha2a`;
+
+  //   ananas.movie.update(movie);
+
+  //   const movieAfter = await ananas.movie.findOne({
+  //     title : `mo1`,
+  //     populate : [`character`],
+  //   });
+
+
+  //   should.exist(movieAfter);
+  //   movieAfter.title.should.equal(`mo1`);
+  //   movieAfter.character.should.be.an(`array`);
+
+  //   const cha2a = _.find(movieAfter.character, { name : `cha2a`});
+
+  //   should.exist(cha2a);
+
+  // });
+
+  it ('Does not update populated properties', async function () {
 
     const data = require('./fixtures/simple.fixture');
     await db.loadData(data);
@@ -338,7 +412,7 @@ describe(`Update queries`, function () {
 
     const cha2a = _.find(movieAfter.character, { name : `cha2a`});
 
-    should.exist(cha2a);
+    should.not.exist(cha2a);
 
   });
 

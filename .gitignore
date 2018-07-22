@@ -1,3 +1,4 @@
 node_modules
 .DS_Store
 testdb.sqlite3
+todo.md

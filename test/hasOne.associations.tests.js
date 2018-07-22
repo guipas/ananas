@@ -58,5 +58,48 @@ describe(`Association : hasOne`, function () {
 
   });
 
+  it('Association can be defined with a helper', async function () {
+
+    const data = require('./fixtures/simple.fixture');
+    await db.loadData(data);
+
+    ananas.models.magazine = {
+      attributes : {
+        author : String,
+      },
+      tableName : `book`,
+      associations : {
+        author : {
+          targetModel : `author`,
+          sourceAttribute : `author`,
+          targetAttribute : `id`,
+        }
+      },
+    };
+
+    ananas.models.author = {
+      associations : {
+        book () {
+          return this.hasOne(`book`, `author`, `id`);
+        },
+      },
+    };
+
+    const authors = await ananas.author.find({
+      name : `n1`,
+      populate : [`book`],
+    });
+
+    should.exist(authors);
+    authors.should.be.an(`array`);
+    authors.length.should.equal(1);
+    const author = authors.pop();
+    should.exist(author);
+    author.name.should.equal(`n1`);
+    author.book.should.be.an(`object`);
+    author.book.title.should.equal(`t1`);
+
+  });
+
 })
 
